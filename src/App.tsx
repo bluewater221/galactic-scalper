@@ -40,7 +40,7 @@ function App() {
               <h3 className="text-slate-400 text-xs uppercase tracking-widest font-bold mb-3">Quick Rules</h3>
               <ul className="space-y-2 text-sm text-slate-300">
                 <li className="flex items-start gap-2">
-                  <span className="text-indigo-500 mt-1">•</span> Never risk > 2% per trade.
+                  <span className="text-indigo-500 mt-1">•</span> Never risk &gt; 2% per trade.
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-indigo-500 mt-1">•</span> Wait for valid setup (Rejection/Breakout).
