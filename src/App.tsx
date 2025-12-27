@@ -1,11 +1,33 @@
+import { useState, useEffect } from 'react';
 import { Scanner } from './components/Scanner';
 import { TradeIdea } from './components/TradeIdea';
+import { ChartComponent } from './components/Chart';
 import { Terminal } from 'lucide-react';
+import { useBinanceData } from './hooks/useBinanceData';
 
 function App() {
+  const { tickers, getCandles } = useBinanceData();
+  const [activeSymbol, setActiveSymbol] = useState<string | null>(null);
+  const [chartData, setChartData] = useState<any[]>([]);
+
+  // Auto-select highest volume trend
+  useEffect(() => {
+    if (tickers.length > 0 && !activeSymbol) {
+      const top = tickers.find(t => t.trend && t.trend !== 'NEUTRAL');
+      if (top) setActiveSymbol(top.symbol);
+    }
+  }, [tickers]);
+
+  // Fetch chart data when active symbol changes
+  useEffect(() => {
+    if (activeSymbol) {
+      getCandles(activeSymbol).then(data => setChartData(data));
+    }
+  }, [activeSymbol]);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 p-4 md:p-8 font-sans selection:bg-indigo-500/30">
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-8">
 
         {/* Header */}
         <header className="flex items-center justify-between pb-6 border-b border-slate-800">
@@ -28,15 +50,31 @@ function App() {
         </header>
 
         {/* Highlight Section */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+          {/* Left: Scanner (4 cols) */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Chart Section */}
+            {activeSymbol && chartData.length > 0 && (
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-2xl">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    {activeSymbol} <span className="text-slate-500 text-sm font-normal">15m Candles</span>
+                  </h2>
+                </div>
+                <ChartComponent symbol={activeSymbol} data={chartData} />
+              </div>
+            )}
+
             <Scanner />
           </div>
-          <div className="lg:col-span-1">
+
+          {/* Right: Trade Idea & Rules (4 cols) */}
+          <div className="lg:col-span-4 space-y-6">
             <TradeIdea />
 
             {/* Mini Guide */}
-            <div className="mt-6 bg-slate-900 border border-slate-800 rounded-xl p-5">
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
               <h3 className="text-slate-400 text-xs uppercase tracking-widest font-bold mb-3">Quick Rules</h3>
               <ul className="space-y-2 text-sm text-slate-300">
                 <li className="flex items-start gap-2">
@@ -51,6 +89,7 @@ function App() {
               </ul>
             </div>
           </div>
+
         </section>
 
       </div>

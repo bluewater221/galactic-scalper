@@ -67,11 +67,28 @@ export function useBinanceData() {
         }
     };
 
+    const getCandles = async (symbol: string) => {
+        try {
+            const res = await fetch(`${BASE_URL}/klines?symbol=${symbol}&interval=15m&limit=100`);
+            const data = await res.json();
+            return data.map((k: any) => ({
+                time: k[0] / 1000 as any, // lightweight-charts expects seconds for UTCTimestamp
+                open: parseFloat(k[1]),
+                high: parseFloat(k[2]),
+                low: parseFloat(k[3]),
+                close: parseFloat(k[4]),
+            }));
+        } catch (error) {
+            console.error("Failed to fetch candles", error);
+            return [];
+        }
+    }
+
     useEffect(() => {
         fetchData();
         const interval = setInterval(fetchData, 30000); // 30s refresh
         return () => clearInterval(interval);
     }, []);
 
-    return { tickers, loading };
+    return { tickers, loading, getCandles };
 }
