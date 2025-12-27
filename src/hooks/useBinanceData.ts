@@ -6,6 +6,7 @@ export interface TickerData {
     priceChangePercent: string;
     quoteVolume: string;
     trend?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+    ema?: number;
 }
 
 const BASE_URL = 'https://fapi.binance.com/fapi/v1';
@@ -15,14 +16,14 @@ export function useBinanceData() {
     const [loading, setLoading] = useState(true);
 
     // Fetch Trends (EMA Check)
-    const checkTrend = async (symbol: string): Promise<'BULLISH' | 'BEARISH' | 'NEUTRAL'> => {
+    const checkTrend = async (symbol: string): Promise<{ trend: 'BULLISH' | 'BEARISH' | 'NEUTRAL', ema: number }> => {
         try {
             const res = await fetch(`${BASE_URL}/klines?symbol=${symbol}&interval=1h&limit=50`);
             const data = await res.json();
             // data[x][4] is closing price
             const closes = data.map((k: any) => parseFloat(k[4]));
 
-            if (closes.length < 20) return 'NEUTRAL';
+            if (closes.length < 20) return { trend: 'NEUTRAL', ema: 0 };
 
             // Calc EMA 20
             const period = 20;
@@ -34,10 +35,11 @@ export function useBinanceData() {
             }
 
             const currentPrice = closes[closes.length - 1];
-            return currentPrice > ema ? 'BULLISH' : 'BEARISH';
+            const trend = currentPrice > ema ? 'BULLISH' : 'BEARISH';
+            return { trend, ema };
         } catch (e) {
             console.error(e);
-            return 'NEUTRAL';
+            return { trend: 'NEUTRAL', ema: 0 };
         }
     };
 
@@ -53,8 +55,8 @@ export function useBinanceData() {
 
             // Enhance with trend data
             const enhancedData = await Promise.all(usdtPairs.map(async (t: any) => {
-                const trend = await checkTrend(t.symbol);
-                return { ...t, trend };
+                const { trend, ema } = await checkTrend(t.symbol);
+                return { ...t, trend, ema };
             }));
 
             setTickers(enhancedData);
